@@ -30,6 +30,8 @@ case class Product(exp1: Expression, exp2: Expression) extends Expression
 case class Quotient(exp1: Expression, exp2: Expression) extends Expression
 case class Remainder(exp1: Expression, exp2: Expression) extends Expression
 
+case class WordExp(x: String) extends Expression
+
 case class LogoArray(xs: Expression*) extends Expression {
 
     override def toString = {

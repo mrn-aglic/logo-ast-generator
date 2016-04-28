@@ -11,7 +11,7 @@ import scala.util.parsing.input.CharSequenceReader._
 class MyLexical extends Lexical with MyTokens {
 
     def token: Parser[Token] = (
-      variable ~ rep(identChar | digit)           ^^ { case first ~ rest => Variable(first :: rest mkString "") }
+      variable ~ rep(identChar | digit)           ^^ { case first ~ second ~ rest => Variable(first :: second :: rest mkString "") }
       | identChar ~ rep(identChar | digit)        ^^ { case first ~ rest => processIdent(first :: rest mkString "") }
       | procDigit                                 ^^ { case first ~ second ~ rest => NumericLit((first mkString "") :: second.getOrElse("") :: rest mkString "") }
       | '\"' ~ rep(chrExcept('\"', ' ', EofCh))   ^^ { case '\"' ~ chars => StringLit(chars mkString "") }
@@ -44,7 +44,7 @@ class MyLexical extends Lexical with MyTokens {
 
     def identChar = letter | elem('_')
 
-    def variable =  ':' ~> identChar
+    def variable =  ':' ~ identChar
 
     override def whitespace: Parser[Any] = rep[Any] (
         whitespaceChar

@@ -76,7 +76,26 @@ object LogoParser extends MyTokenParsers {
 
     def list: Parser[LogoList] = "[" ~> ((guard(listAllow) ~> (list | value | unaryMinus))*) <~ "]" ^^ { case x => LogoList(x: _*) }
 
-    def arrayWord: Parser[LogoArrayWord] = rep1("{") ~> rep(isDelim | isChar | value | "{" | "}") ^^ { case rest =>
+    def wordA: Parser[WordExp] = word("{" | "}")
+    def wordL: Parser[WordExp] = word("[" | "]")
+
+    def word(sp: Parser[String]): Parser[WordExp] = rep1(isDelim | isChar | value | sp) ^^ { case rest =>
+
+        val xs = rest.map {
+
+            case DoubleConst(a) => a
+            case IntegerConst(a) => a
+            case StringConst(a) => a
+            case t => t
+        }
+
+        WordExp(xs mkString "")
+    }
+
+    def arrayWord: Parser[LogoArray] = rep1("{") ~> wordA ^^ { case x => LogoArray(x) }
+
+    @deprecated
+    def arrayWord2: Parser[LogoArrayWord] = rep1("{") ~> rep(isDelim | isChar | value | "{" | "}") ^^ { case rest =>
 
         val xs = rest.map {
 
@@ -89,7 +108,10 @@ object LogoParser extends MyTokenParsers {
         LogoArrayWord(xs mkString "")
     }
 
-    def listWord: Parser[LogoListWord] = rep1("[") ~> rep(isDelim | isChar | value | "[" | "]") ^^ { case rest =>
+    def listWord: Parser[LogoList] = rep1("[") ~> wordL ^^ { case x => LogoList(x) }
+
+    @deprecated
+    def listWord2: Parser[LogoListWord] = rep1("[") ~> rep(isDelim | isChar | value | "[" | "]") ^^ { case rest =>
 
         val xs = rest.map {
 

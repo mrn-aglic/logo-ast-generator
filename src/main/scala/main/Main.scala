@@ -51,7 +51,9 @@ object Main {
 
         val test11 = "\"helltopo :print \"moje"
 
-        val ctest = test11
+        val test12 = "[ ]"
+
+        val ctest = test12
 
         val scanner = new lexical.Scanner(ctest)
 
