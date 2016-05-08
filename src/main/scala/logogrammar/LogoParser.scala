@@ -1,7 +1,7 @@
 package logogrammar
 
 import astgenerator._
-import lexical.{MyLexical, MyTokenParsers}
+import lexical.{MyLexical, MyTokenParsers, MyTokens}
 
 import scala.collection.mutable
 import scala.language.{implicitConversions, postfixOps}
@@ -11,14 +11,13 @@ import scala.language.{implicitConversions, postfixOps}
   */
 object LogoParser extends MyTokenParsers {
 
-    //override type Tokens = MyTokens
-    override val lexical = new MyLexical
-
-    override implicit def keyword(chars : String): Parser[String] =
-        if(lexical.reserved.contains(chars) || lexical.delimiters.contains(chars)) super.keyword(chars)
-        else failure("You are trying to parse \""+chars+"\", but it is neither contained in the delimiters list, nor in the reserved keyword list of your lexical object")
-
     lexical.delimiters ++= List("\n", "+", "-", "*", "/", "^", "(", ")", "{", "}", "[", "]", "<", ">", "<=", ">=", "==", "<>", ",", " ")
+
+    lexical.reserved ++= new mutable.HashMap[String, Int]
+    (
+      "xcor" -> 0, "ycor" -> 0, "heading" -> 0, "towards" -> 1, "pendown" -> 0, "pendown?" -> 0,
+      "penup" -> 0, "penup?" -> 0, "pd" -> 0, "pu" -> 0
+      )
 
     /*lexical.reserved ++= mutable.HashSet("xcor", "ycor", "heading", "towards", "pendown?",
     "sum", "difference", "product", "quotient", "remainder", "minus", "less?", "greater?", "equal?",
@@ -34,6 +33,8 @@ object LogoParser extends MyTokenParsers {
     def arrayAllow = isAllow(List('[', ' ', ']'))
 
     def variableExp = variable ^^ { case x => Variable(x) }
+
+    // stringValue is analagous to QuotedWord
     def stringValue = stringLit ^^ { case x => StringConst(x) }
     def numericValue = numericLit ^^ { case x => DoubleConst(x) }
 
@@ -126,10 +127,22 @@ object LogoParser extends MyTokenParsers {
 
     def term = value | parens | unaryMinus
 
+
     def arrayOpt = array | arrayWord
     def listOpt =  list | listWord
 
     def expr = binaryOp | arrayOpt | listOpt | term
+
+    def body = procedure_call
+
+    def procedure_def = "to" ~ ident ~ rep(variableExp) ~ rep(body) ~ "end"
+
+    //def procedure_call_extra_input = ???
+    def procedure_call = ???
+
+    def instruction = procedure_def
+
+    def prog = rep(instruction)
 
     def program = rep(expr)
 

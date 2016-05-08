@@ -23,10 +23,10 @@ object Main {
 
         lexical.delimiters ++= List("\n", "+", "-", "*", "^", "/", "(", ")", "{", "}", "[", "]", ">", "<", ">=", "<=", ",", " ")
 
-        lexical.reserved ++= mutable.HashSet("xcor", "ycor", "heading", "towards", "pendown?",
+        /*lexical.reserved ++= mutable.HashSet("xcor", "ycor", "heading", "towards", "pendown?",
             "sum", "difference", "product", "quotient", "remainder", "minus", "less?", "greater?", "equal?",
             "notequal?", "to", "end", "if", "ifelse", "repeat", "forward", "back", "left", "right", "setxy",
-            "setx", "sety", "home", "showturtle", "hideturtle", "clean", "clearscreen", "pendown", "penup", "local", "make", "list")
+            "setx", "sety", "home", "showturtle", "hideturtle", "clean", "clearscreen", "pendown", "penup", "local", "make", "list")*/
 
         val test1 = """to test [:a :b]
                       |     sum 2 3
@@ -53,7 +53,7 @@ object Main {
 
         val test12 = "[ ]"
 
-        val ctest = test12
+        val ctest = test11
 
         val scanner = new lexical.Scanner(ctest)
 
