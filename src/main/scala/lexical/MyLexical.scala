@@ -20,17 +20,6 @@ class MyLexical extends Lexical with MyTokens {
       | failure("Illegal character")
       )
 
-    def processNewProcedure(chars: String) =
-        if(reserved.contains(chars)) throw new RuntimeException
-        else {
-            Identifier(chars)
-        }
-
-    def procDef = toSeq ~> identChar ~ rep(identChar | elem('_')) <~ variable.* <~ endSeq
-
-    def toSeq = 't' ~ 'o' ^^^ "to"
-    def endSeq = 'e' ~ 'n' ~ 'd' ^^^ "end"
-
     def processIdent(name: String) = {
 
         if (reserved contains name) {
@@ -57,7 +46,7 @@ class MyLexical extends Lexical with MyTokens {
     /****** Čisti copy-paste ******/
 
     /** The set of reserved identifiers: these will be returned as `Keyword`s. */
-    val reserved = new scala.collection.mutable.HashSet[String]
+    val reserved = new scala.collection.mutable.HashMap[String, Int]
 
     /** The set of delimiters (ordering does not matter). */
     val delimiters = new scala.collection.mutable.HashSet[String]
