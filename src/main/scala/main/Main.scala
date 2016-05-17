@@ -23,6 +23,8 @@ object Main {
 
         lexical.delimiters ++= List("\n", "+", "-", "*", "^", "/", "(", ")", "{", "}", "[", "]", ">", "<", ">=", "<=", ",", " ")
 
+        lexical.reserved ++= Reserved.get()
+
         /*lexical.reserved ++= mutable.HashSet("xcor", "ycor", "heading", "towards", "pendown?",
             "sum", "difference", "product", "quotient", "remainder", "minus", "less?", "greater?", "equal?",
             "notequal?", "to", "end", "if", "ifelse", "repeat", "forward", "back", "left", "right", "setxy",
@@ -78,4 +80,13 @@ object Main {
         case xs if xs.atEnd => List()
         case xs => xs.first.asInstanceOf[Tokens#Token] :: getTokens(xs.rest)
     }
+}
+
+object Reserved {
+
+    def get(): mutable.HashMap[String, Int] = new mutable.HashMap[String, Int]
+    (
+      "xcor" -> 0, "ycor" -> 0, "heading" -> 0, "towards" -> 1, "pendown" -> 0, "pendown?" -> 0,
+      "penup" -> 0, "penup?" -> 0, "pd" -> 0, "pu" -> 0
+      )
 }
