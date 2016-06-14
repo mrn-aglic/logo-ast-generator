@@ -68,6 +68,6 @@ class MyTokenParsers extends TMyTokenParsers {
     val lexical = new MyLexical
 
     override implicit def keyword(chars : String): Parser[String] =
-        if(lexical.reserved.contains(chars) || lexical.delimiters.contains(chars)) super.keyword(chars)
+        if(chars == "to" || chars == "end" || lexical.reserved.contains(chars) || lexical.delimiters.contains(chars)) super.keyword(chars)
         else failure("You are trying to parse \""+chars+"\", but it is neither contained in the delimiters list, nor in the reserved keyword list of your lexical object")
 }

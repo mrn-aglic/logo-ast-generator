@@ -11,7 +11,8 @@ import scala.util.parsing.input.CharSequenceReader._
 class MyLexical extends Lexical with MyTokens {
 
     def token: Parser[Token] = (
-      variable ~ rep(identChar | digit)           ^^ { case first ~ second ~ rest => Variable(first :: second :: rest mkString "") }
+        keywords
+      | variable ~ rep(identChar | digit)           ^^ { case first ~ second ~ rest => Variable(first :: second :: rest mkString "") }
       | identChar ~ rep(identChar | digit)        ^^ { case first ~ rest => processIdent(first :: rest mkString "") }
       | procDigit                                 ^^ { case first ~ second ~ rest => NumericLit((first mkString "") :: second.getOrElse("") :: rest mkString "") }
       | '\"' ~ rep(chrExcept('\"', ' ', EofCh))   ^^ { case '\"' ~ chars => StringLit(chars mkString "") }
@@ -20,13 +21,24 @@ class MyLexical extends Lexical with MyTokens {
       | failure("Illegal character")
       )
 
+    def keywords: Parser[Token] =
+        toKeyword | endKeyword
+
+    def toKeyword =
+        ('t' ~ 'o') ^^ { case _ => Keyword("to") } |
+        ('T' ~ 'O') ^^ { case _ => Keyword("to") }
+
+    def endKeyword =
+        ('e' ~ 'n' ~ 'd') ^^ { case _ => Keyword("end") } |
+        ('E' ~ 'N' ~ 'D') ^^ { case _ => Keyword("end") }
+
     def processIdent(name: String) = {
 
-        if (reserved contains name) {
-            Keyword(name)
-        } else {
+        //if (reserved contains name) {
+        //    Keyword(name)
+        //} else {
             Identifier(name)
-        }
+        //}
     }
 
     def procDigit = digit.+ ~ '.'.? ~ digit.*

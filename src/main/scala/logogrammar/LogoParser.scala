@@ -3,7 +3,6 @@ package logogrammar
 import astgenerator._
 import lexical.MyTokenParsers
 
-import scala.collection.mutable
 import scala.language.{implicitConversions, postfixOps}
 
 /**
@@ -13,11 +12,7 @@ object LogoParser extends MyTokenParsers {
 
     lexical.delimiters ++= List("\n", "+", "-", "*", "/", "^", "(", ")", "{", "}", "[", "]", "<", ">", "<=", ">=", "==", "<>", ",", " ")
 
-    lexical.reserved ++= new mutable.HashMap[String, Int]
-    (
-      "xcor" -> 0, "ycor" -> 0, "heading" -> 0, "towards" -> 1, "pendown" -> 0, "pendown?" -> 0,
-      "penup" -> 0, "penup?" -> 0, "pd" -> 0, "pu" -> 0
-      )
+    lexical.reserved ++= IncludedInstructions.getInstructions
 
     def isChar = elem("isChar", x => x.toString.charAt(0).isLetter)
 
@@ -42,7 +37,7 @@ object LogoParser extends MyTokenParsers {
 
     def nullPrecedenceBinaryOp = firstPrecedenceBinaryOp * (
 
-      "<" ^^^ { (a: Expression, b: Expression) => IsLess(a, b) } |
+        "<" ^^^ { (a: Expression, b: Expression) => IsLess(a, b) } |
         ">" ^^^ { (a: Expression, b: Expression) => IsGreater(a, b) } |
         "<=" ^^^ { (a: Expression, b: Expression) => IsLessOrEqual(a, b) } |
         ">=" ^^^ { (a: Expression, b: Expression) => IsGreaterOrEqual(a, b) } |
@@ -62,7 +57,7 @@ object LogoParser extends MyTokenParsers {
         "/" ^^^ { (a: Expression, b: Expression) => Quotient(a, b) }
       )
 
-    def thirdPrecedenceBinaryOp = value * (
+    def thirdPrecedenceBinaryOp = (value | unaryMinus) * (
 
       "^" ^^^ { (a: Expression, b: Expression) => Power(a, b) }
       )
@@ -114,8 +109,19 @@ object LogoParser extends MyTokenParsers {
         LogoArrayWord(xs mkString "")
     }
 
-    def listWord: Parser[LogoList] = rep1("[") ~> wordL ^^ { case x => LogoList(x) }
+    def listWord3: Parser[LogoList] = rep1("[") ~> wordL ^^ { case x => LogoList(x) }
+    def listWord: Parser[LogoList] = "[" ~> rep(isDelim | isChar | value | listWord) <~ "]" ^^ { case x =>
 
+        val xs = x.map {
+
+            case DoubleConst(a) => a
+            case IntegerConst(a) => a
+            case StringConst(a) => a
+            case t => t
+        }
+
+        LogoList(WordExp(xs mkString ""))
+    }
     /*
     * @deprecated
     * the method will be removed later on
@@ -142,27 +148,44 @@ object LogoParser extends MyTokenParsers {
 
     def expr = binaryOp | arrayOpt | listOpt | term
 
-    def body: Parser[Body] = rep(procedure_call) ^^ { case x => Body(x) }
+    def body: Parser[Body] = rep(procedure_call | procedure_call_extra_input) ^^ { case x => Body(x) }
 
-    def procedure_def: Parser[Instruction] = ("to" ~> ident ~ rep(variableExp) ~ body <~ "end") ^? ({
-        case name ~ vars ~ procBody if !lexical.reserved.contains(name) =>
+    def procedure_def: Parser[Instruction] = "to" ~> ident ~ rep(variableExp) >> { case name ~ vars =>
+
+        if(!lexical.reserved.contains(name)){
+
+            lexical.reserved += name -> vars.length
+            success(name) ~ success(vars) ~ body <~ "end"
+        } else {
+
+            err("Reserved already contains definition of said procedure")
+        }
+    } ^? ({
+        case name ~ vars ~ procBody => //if !lexical.reserved.contains(name) =>
 
             lexical.reserved += name -> vars.length
             ProcedureDef(name, vars, procBody)
     }, e => s"error while parsing procedure_def: $e")
 
-    //def procedure_call_extra_input = ???
-    def procedure_call: Parser[BodyInstruction] = ident >> (x => x ~ repN(lexical.reserved(x), expr)) ^? ({
-        case name ~ expr if lexical.reserved.contains(name) =>
+    def procedure_call_extra_input = "(" ~> ident ~ rep(expr) <~ ")" ^? ({
+        case name ~ exprs if lexical.reserved.contains(name) =>
 
-            ProcedureCall(name, expr)
+            ProcedureCallExtraInput(name, exprs)
+    }, e => s"error while parsing procedure_call_extra_input")
+
+    def procedure_call: Parser[BodyInstruction] = ident >> (x => {
+
+        success(x) ~ repN(lexical.reserved(x), expr)
+    }) ^? ({
+        case name ~ exprs if lexical.reserved.contains(name) =>
+
+            ProcedureCall(name, exprs)
     }, e => s"error while parsing procedure_call: $e")
 
-    def instruction = procedure_def
+    def instruction = procedure_def | procedure_call_extra_input | procedure_call
 
-    def prog = rep(instruction)
-
-    def program = rep(expr)
+    //def program = rep(expr)
+    def program = rep(instruction)
 
     def parse(s: String) = {
 

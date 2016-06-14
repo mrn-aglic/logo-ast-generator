@@ -1,5 +1,6 @@
 package main
 
+import astgenerator.IncludedInstructions
 import lexical.MyLexical
 import logogrammar.LogoParser.parse
 
@@ -23,14 +24,9 @@ object Main {
 
         lexical.delimiters ++= List("\n", "+", "-", "*", "^", "/", "(", ")", "{", "}", "[", "]", ">", "<", ">=", "<=", ",", " ")
 
-        lexical.reserved ++= Reserved.get()
+        lexical.reserved ++= IncludedInstructions.getInstructions
 
-        /*lexical.reserved ++= mutable.HashSet("xcor", "ycor", "heading", "towards", "pendown?",
-            "sum", "difference", "product", "quotient", "remainder", "minus", "less?", "greater?", "equal?",
-            "notequal?", "to", "end", "if", "ifelse", "repeat", "forward", "back", "left", "right", "setxy",
-            "setx", "sety", "home", "showturtle", "hideturtle", "clean", "clearscreen", "pendown", "penup", "local", "make", "list")*/
-
-        val test1 = """to test [:a :b]
+        val test1 = """to test :a :b
                       |     sum 2 3
                       |end""".stripMargin
 
@@ -38,7 +34,7 @@ object Main {
 
         val test3 = "12 + 14 * 5"
 
-        val test4 = "4 + 2 >= 5 * 3"
+        val test4 = "4 + 2 >= 5 * -3"
 
         val test5 = "{ 4 3 2 }"
 
@@ -47,7 +43,7 @@ object Main {
 
         val test8 = "[ a + 1 2 + ]"
 
-        val test9 = "[ [ 1 2 3 ] + ]"
+        val test9 = "[ [ 1 2 3 ] + ] 2 + 5"
 
         val test10 = "2 + 4 ^ 1 * 3"
 
@@ -55,7 +51,22 @@ object Main {
 
         val test12 = "[ ]"
 
-        val ctest = test11
+        val test13 =
+            """
+              |TO fern :size :sign
+              |  if :size < 1 [ stop ]
+              |  fd :size
+              |  rt 70 * :sign fern :size * 0.5 :sign * -1 lt 70 * :sign
+              |  fd :size
+              |  lt 70 * :sign fern :size * 0.5 :sign rt 70 * :sign
+              |  rt 7 * :sign fern :size - 1 :sign lt 7 * :sign
+              |  bk :size * 2
+              |END
+              |window clearscreen pu bk 150 pd
+              |fern 25 1
+            """.stripMargin
+
+        val ctest = test4
 
         val scanner = new lexical.Scanner(ctest)
 
@@ -63,7 +74,7 @@ object Main {
 
         println("Tokens: " + getTokens(scanner))
 
-        val ctest2 = test9
+        val ctest2 = test13
 
         val scanner2 = new lexical.Scanner(ctest2)
 
@@ -71,7 +82,7 @@ object Main {
 
         println("Tokens: " + getTokens(scanner2))
 
-        println(parse(ctest))
+        //println(parse(ctest))
         println(parse(ctest2))
     }
 
