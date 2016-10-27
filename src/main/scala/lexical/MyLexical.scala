@@ -57,6 +57,8 @@ class MyLexical extends Lexical with MyTokens {
 
     /****** Čisti copy-paste ******/
 
+    val identifiers = new scala.collection.mutable.HashMap[String, Int]
+
     /** The set of reserved identifiers: these will be returned as `Keyword`s. */
     val reserved = new scala.collection.mutable.HashMap[String, Int]
 

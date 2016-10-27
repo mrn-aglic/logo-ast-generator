@@ -12,7 +12,7 @@ object LogoParser extends MyTokenParsers {
 
     lexical.delimiters ++= List("\n", "+", "-", "*", "/", "^", "(", ")", "{", "}", "[", "]", "<", ">", "<=", ">=", "==", "<>", ",", " ")
 
-    lexical.reserved ++= IncludedInstructions.getInstructions
+    lexical.identifiers ++= IncludedInstructions.getInstructions
 
     def isChar = elem("isChar", x => x.toString.charAt(0).isLetter)
 
@@ -26,12 +26,12 @@ object LogoParser extends MyTokenParsers {
 
     def arrayAllow = isAllow(List('[', ' ', ']'))
 
-    def variableExp = variable ^^ { case x => Variable(x) }
+    def variableExp = variable ^^ (x => Variable(x))
 
     // stringValue is analagous to QuotedWord
-    def stringValue = stringLit ^^ { case x => StringConst(x) }
+    def stringValue = stringLit ^^ (x => StringConst(x))
 
-    def numericValue = numericLit ^^ { case x => DoubleConst(x) }
+    def numericValue = numericLit ^^ (x => DoubleConst(x))
 
     def value = variableExp | stringValue | numericValue
 
@@ -64,19 +64,19 @@ object LogoParser extends MyTokenParsers {
 
     def binaryOp: Parser[Expression] = nullPrecedenceBinaryOp
 
-    def unaryMinus: Parser[Negate] = "-" ~> expr ^^ { case x => Negate(x) }
+    def unaryMinus: Parser[Negate] = "-" ~> expr ^^ (x => Negate(x))
 
     def parens: Parser[Expression] = "(" ~> expr <~ ")"
 
-    def array: Parser[LogoArray] = "{" ~> ((guard(arrayAllow) ~> (array | value | unaryMinus)) *) <~ "}" ^^ { case x => LogoArray(x: _*) }
+    def array: Parser[LogoArray] = "{" ~> ((guard(arrayAllow) ~> (array | value | unaryMinus)) *) <~ "}" ^^ (x => LogoArray(x: _*))
 
-    def list: Parser[LogoList] = "[" ~> ((guard(listAllow) ~> (list | value | unaryMinus)) *) <~ "]" ^^ { case x => LogoList(x: _*) }
+    def list: Parser[LogoList] = "[" ~> ((guard(listAllow) ~> (list | value | unaryMinus)) *) <~ "]" ^^ (x => LogoList(x: _*))
 
     def wordA: Parser[WordExp] = word("{" | "}")
 
     def wordL: Parser[WordExp] = word("[" | "]")
 
-    def word(sp: Parser[String]): Parser[WordExp] = rep1(isDelim | isChar | value | sp) ^^ { case rest =>
+    def word(sp: Parser[String]): Parser[WordExp] = rep1(isDelim | isChar | value | sp) ^^ { rest =>
 
         val xs = rest.map {
 
@@ -89,14 +89,14 @@ object LogoParser extends MyTokenParsers {
         WordExp(xs mkString "")
     }
 
-    def arrayWord: Parser[LogoArray] = rep1("{") ~> wordA ^^ { case x => LogoArray(x) }
+    def arrayWord: Parser[LogoArray] = rep1("{") ~> wordA ^^ (x => LogoArray(x))
 
     /*
     * @deprecated
     * the method will be removed later on
     * */
     @deprecated
-    def arrayWord2: Parser[LogoArrayWord] = rep1("{") ~> rep(isDelim | isChar | value | "{" | "}") ^^ { case rest =>
+    def arrayWord2: Parser[LogoArrayWord] = rep1("{") ~> rep(isDelim | isChar | value | "{" | "}") ^^ { rest =>
 
         val xs = rest.map {
 
@@ -109,8 +109,8 @@ object LogoParser extends MyTokenParsers {
         LogoArrayWord(xs mkString "")
     }
 
-    def listWord3: Parser[LogoList] = rep1("[") ~> wordL ^^ { case x => LogoList(x) }
-    def listWord: Parser[LogoList] = "[" ~> rep(isDelim | isChar | value | listWord) <~ "]" ^^ { case x =>
+    def listWord3: Parser[LogoList] = rep1("[") ~> wordL ^^ (x => LogoList(x))
+    def listWord: Parser[LogoList] = "[" ~> rep(isDelim | isChar | value | listWord) <~ "]" ^^ { x =>
 
         val xs = x.map {
 
@@ -127,7 +127,7 @@ object LogoParser extends MyTokenParsers {
     * the method will be removed later on
     * */
     @deprecated
-    def listWord2: Parser[LogoListWord] = rep1("[") ~> rep(isDelim | isChar | value | "[" | "]") ^^ { case rest =>
+    def listWord2: Parser[LogoListWord] = rep1("[") ~> rep(isDelim | isChar | value | "[" | "]") ^^ { rest =>
 
         val xs = rest.map {
 
@@ -148,13 +148,13 @@ object LogoParser extends MyTokenParsers {
 
     def expr = binaryOp | arrayOpt | listOpt | term
 
-    def body: Parser[Body] = rep(procedure_call | procedure_call_extra_input) ^^ { case x => Body(x) }
+    def body: Parser[Body] = rep(procedure_call | procedure_call_extra_input) ^^ (x => Body(x))
 
     def procedure_def: Parser[Instruction] = "to" ~> ident ~ rep(variableExp) >> { case name ~ vars =>
 
-        if(!lexical.reserved.contains(name)){
+        if(!(lexical.identifiers.contains(name) || lexical.reserved.contains(name))){
 
-            lexical.reserved += name -> vars.length
+            lexical.identifiers += name -> vars.length
             success(name) ~ success(vars) ~ body <~ "end"
         } else {
 
@@ -163,21 +163,21 @@ object LogoParser extends MyTokenParsers {
     } ^? ({
         case name ~ vars ~ procBody => //if !lexical.reserved.contains(name) =>
 
-            lexical.reserved += name -> vars.length
+            //lexical.reserved += name -> vars.length
             ProcedureDef(name, vars, procBody)
     }, e => s"error while parsing procedure_def: $e")
 
     def procedure_call_extra_input = "(" ~> ident ~ rep(expr) <~ ")" ^? ({
-        case name ~ exprs if lexical.reserved.contains(name) =>
+        case name ~ exprs if lexical.identifiers.contains(name) =>
 
             ProcedureCallExtraInput(name, exprs)
     }, e => s"error while parsing procedure_call_extra_input")
 
     def procedure_call: Parser[BodyInstruction] = ident >> (x => {
 
-        success(x) ~ repN(lexical.reserved(x), expr)
+        success(x) ~ repN(lexical.identifiers(x), expr)
     }) ^? ({
-        case name ~ exprs if lexical.reserved.contains(name) =>
+        case name ~ exprs if lexical.identifiers.contains(name) =>
 
             ProcedureCall(name, exprs)
     }, e => s"error while parsing procedure_call: $e")
