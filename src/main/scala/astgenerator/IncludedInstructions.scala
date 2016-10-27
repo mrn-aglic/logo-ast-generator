@@ -14,7 +14,8 @@ object IncludedInstructions {
         elems.head -> elems.tail.head.trim.toInt
     }
 
-    val lines = io.Source.fromFile("/Users/Marin/Documents/instructions.txt").getLines().toList
+    val lines = io.Source.fromURL(getClass.getResource("/instructions.txt")).getLines().toList
+    //val lines = io.Source.fromFile("/Users/Marin/Documents/instructions.txt").getLines().toList
 
     private[this] val instructions = mutable.HashMap[String, Int]()
 
