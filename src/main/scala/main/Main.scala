@@ -92,12 +92,3 @@ object Main {
         case xs => xs.first.asInstanceOf[Tokens#Token] :: getTokens(xs.rest)
     }
 }
-
-object Reserved {
-
-    def get(): mutable.HashMap[String, Int] = new mutable.HashMap[String, Int]
-    (
-      "xcor" -> 0, "ycor" -> 0, "heading" -> 0, "towards" -> 1, "pendown" -> 0, "pendown?" -> 0,
-      "penup" -> 0, "penup?" -> 0, "pd" -> 0, "pu" -> 0
-      )
-}
