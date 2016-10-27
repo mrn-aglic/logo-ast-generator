@@ -47,7 +47,6 @@ trait TMyTokenParsers extends TokenParsers {
     implicit def keyword(chars: String): Parser[String] = {
         keywordCache.getOrElseUpdate(chars, (accept(Keyword(chars)): Parser[Elem]) ^^ (x => x.chars))
     }
-        //keywordCache.getOrElseUpdate(chars, accept(Keyword(chars)) ^^ (_.chars))
 
     def numericLit: Parser[Double] =
         elem("number", _.isInstanceOf[NumericLit]) ^^ (_.chars.toDouble)
