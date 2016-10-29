@@ -22,7 +22,7 @@ object Main {
 
         val lexical = new MyLexical
 
-        lexical.delimiters ++= List("\n", "+", "-", "*", "^", "/", "(", ")", "{", "}", "[", "]", ">", "<", ">=", "<=", ",", " ")
+        //lexical.delimiters ++= List("\n", "+", "-", "*", "^", "/", "(", ")", "{", "}", "[", "]", ">", "<", ">=", "<=", ",", " ")
 
         lexical.reserved ++= IncludedInstructions.getInstructions
 
@@ -34,7 +34,7 @@ object Main {
 
         val test3 = "12 + 14 * 5"
 
-        val test4 = "4 + 2 >= 5 * -3"
+        val test4 = "print 4 + 2 >= 5 * -3"
 
         val test5 = "{ 4 3 2 }"
 
@@ -70,20 +70,7 @@ object Main {
 
         val scanner = new lexical.Scanner(ctest)
 
-        println(scanner.source)
-
-        println("Tokens: " + getTokens(scanner))
-
-        val ctest2 = test13
-
-        val scanner2 = new lexical.Scanner(ctest2)
-
-        println(scanner2.source)
-
-        println("Tokens: " + getTokens(scanner2))
-
-        //println(parse(ctest))
-        println(parse(ctest2))
+        println(parse(ctest))
     }
 
     def getTokens(scanner: Scanners#Scanner): List[Tokens#Token] = scanner match {
